@@ -33,8 +33,6 @@ SafeDrive adds three layers of safety:
 
 ## Demo
 
-> Try it live: **[your-username.github.io/safedrive]()**
-
 1. Drag the **speed slider** above 20 km/h → Safe Mode activates
 2. Click **"Trigger ride request"** → ride details are read aloud automatically
 3. Click **"Start voice recognition"** → say **"accept"** or **"reject"** out loud
@@ -80,10 +78,6 @@ npm run build
 # then push the /dist folder to your gh-pages branch
 ```
 
-Or use [Vercel](https://vercel.com) — connect your repo, it auto-deploys on every push.
-
----
-
 ## How it would work in a real app
 
 In a production implementation (React Native / Flutter):
@@ -114,12 +108,12 @@ The only change needed from Rapido/Uber's side is:
 
 ## Author
 
-Built by [Your Name] as a product + engineering concept.
+Built by Jerin J Abraham as a product + engineering concept.
 
 Open to opportunities at product companies working on safety, mobility, or developer tools.
 
-📧 your@email.com  
-🔗 linkedin.com/in/yourprofile
+📧 jerinjabraham45@gmail.com  
+🔗 https://www.linkedin.com/in/jerin-j-abraham/
 
 ---
 
