@@ -4,9 +4,9 @@
   "description": "Hands-free ride acceptance for rideshare drivers — voice commands + speed-based safe mode",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "npx vite",
+    "build": "npx vite build",
+    "preview": "npx vite preview"
   },
   "dependencies": {
     "react": "^18.2.0",
