@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
-function MapArea({ speed, variant, rideActive, safeModeOn }) {
+function MapArea({ speed, variant, safeModeOn }) {
   const carRef = useRef(null);
   const posRef = useRef({ x: 50, y: 50 });
   const movingRef = useRef(false);
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
 
   useEffect(() => {
     if (speed > 0 && !movingRef.current) {
@@ -14,8 +16,8 @@ function MapArea({ speed, variant, rideActive, safeModeOn }) {
   }, [speed]);
 
   function moveCar() {
-    if (!movingRef.current || speed === 0) return;
-    const s = speed / 60;
+    if (!movingRef.current || speedRef.current === 0) return;
+    const s = speedRef.current / 60;
     posRef.current.x += (Math.random() - 0.45) * s * 4;
     posRef.current.y += (Math.random() - 0.52) * s * 3;
     posRef.current.x = Math.max(10, Math.min(88, posRef.current.x));
@@ -51,19 +53,56 @@ function MapArea({ speed, variant, rideActive, safeModeOn }) {
           {safeModeOn ? "SAFE MODE ON" : "SAFE MODE OFF"}
         </div>
       )}
-      {!isAfter && (
-        <div className="psafe-badge off">UNSAFE</div>
-      )}
+      {!isAfter && <div className="psafe-badge off">UNSAFE</div>}
     </div>
   );
 }
 
-function RideCard({ variant, timerSec, safeModeOn, onAccept, onReject, heardText, listening, rideResult }) {
-  const isAfter = variant === "after";
+function WaveAnimation() {
+  const [heights, setHeights] = useState([3, 7, 4, 10, 5, 8, 3]);
+  useEffect(() => {
+    const int = setInterval(() => {
+      setHeights(Array.from({ length: 7 }, () => Math.floor(Math.random() * 14) + 3));
+    }, 130);
+    return () => clearInterval(int);
+  }, []);
+  return (
+    <div className="vwaves">
+      {heights.map((h, i) => <div key={i} className="vwb" style={{ height: h }} />)}
+    </div>
+  );
+}
+
+// ── BEFORE PHONE: shows buttons always (this is the dangerous UX) ──
+function BeforeRideCard({ timerSec, onAccept, onReject }) {
+  const pct = (timerSec / 15) * 100;
+  return (
+    <div className="pride-card">
+      <div className="prc-header">
+        <div className="prc-dot" />
+        <span className="prc-title">New Ride</span>
+        <span className="timer-label">{timerSec}s</span>
+      </div>
+      <div className="prc-row"><div className="prc-pip g" /><span>Cyber Hub, Gurugram</span></div>
+      <div className="prc-row" style={{ marginTop: 3 }}><div className="prc-pip r" /><span>Ambience Mall</span></div>
+      <div className="prc-fare">₹89 <span>4.2km · 12min</span></div>
+      <div className="ptimer-bar"><div className="ptimer-fill" style={{ width: pct + "%" }} /></div>
+      {/* Always shows buttons — this is the problem */}
+      <div className="pbtns">
+        <button className="pbtn rej" onClick={onReject}>Reject</button>
+        <button className="pbtn acc" onClick={onAccept}>Accept</button>
+      </div>
+    </div>
+  );
+}
+
+// ── AFTER PHONE: below 20 = buttons OK, above 20 = ONLY voice, no buttons at all ──
+function AfterRideCard({ timerSec, safeModeOn, onAccept, onReject, heardText, listening, rideResult }) {
   const pct = (timerSec / 15) * 100;
 
-  return (
-    <>
+  // STOPPED / SLOW — normal buttons fine
+  if (!safeModeOn) {
+    return (
       <div className="pride-card">
         <div className="prc-header">
           <div className="prc-dot" />
@@ -74,55 +113,40 @@ function RideCard({ variant, timerSec, safeModeOn, onAccept, onReject, heardText
         <div className="prc-row" style={{ marginTop: 3 }}><div className="prc-pip r" /><span>Ambience Mall</span></div>
         <div className="prc-fare">₹89 <span>4.2km · 12min</span></div>
         <div className="ptimer-bar"><div className="ptimer-fill" style={{ width: pct + "%" }} /></div>
+        <div className="pbtns">
+          <button className="pbtn rej" onClick={onReject}>Reject</button>
+          <button className="pbtn acc" onClick={onAccept}>Accept</button>
+        </div>
+      </div>
+    );
+  }
 
-        {isAfter && safeModeOn ? (
-          <div className="lock-msg">🔒 LOCKED — USE VOICE</div>
-        ) : (
-          <div className="pbtns">
-            <button className="pbtn rej" onClick={onReject}>Reject</button>
-            <button className="pbtn acc" onClick={onAccept}>Accept</button>
-          </div>
-        )}
+  // DRIVING (≥20 km/h) — full screen voice takeover, zero buttons
+  return (
+    <div className="voice-screen">
+      <div className="voice-ride-info">
+        <div className="vri-row"><div className="prc-pip g" /><span>Cyber Hub</span></div>
+        <div className="vri-row"><div className="prc-pip r" /><span>Ambience Mall</span></div>
+        <div className="vri-fare">₹89 &nbsp;<span>4.2km</span></div>
+        <div className="vtimer-bar"><div className="vtimer-fill" style={{ width: pct + "%" }} /></div>
       </div>
 
-      {/* Voice screen — only after phone + safe mode */}
-      {isAfter && safeModeOn && (
-        <div className="voice-screen">
-          <div className={`vring ${rideResult ? "heard" : ""}`}>
-            {rideResult === "accepted" ? "✅" : rideResult === "rejected" ? "❌" : "🎤"}
-          </div>
-          <div className="vtitle">
-            {rideResult === "accepted" ? "Accepted!" : rideResult === "rejected" ? "Rejected!" : listening ? "Listening…" : "Tap mic to start"}
-          </div>
-          <div className="vsub">
-            {heardText ? `"${heardText}"` : 'say "accept" or "reject"\nया हाँ / नहीं'}
-          </div>
-          {listening && <WaveAnimation />}
-          <div className="vbtns">
-            <button className="vbtn rej" onClick={onReject}>Reject</button>
-            <button className="vbtn acc" onClick={onAccept}>Accept</button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-function WaveAnimation() {
-  const [heights, setHeights] = useState([3, 7, 4, 10, 5, 8, 3]);
-
-  useEffect(() => {
-    const int = setInterval(() => {
-      setHeights(Array.from({ length: 7 }, () => Math.floor(Math.random() * 14) + 3));
-    }, 130);
-    return () => clearInterval(int);
-  }, []);
-
-  return (
-    <div className="vwaves">
-      {heights.map((h, i) => (
-        <div key={i} className="vwb" style={{ height: h }} />
-      ))}
+      <div className={`vring ${rideResult ? "heard" : ""}`}>
+        {rideResult === "accepted" ? "✅" : rideResult === "rejected" ? "❌" : "🎤"}
+      </div>
+      <div className="vtitle">
+        {rideResult === "accepted" ? "Ride Accepted!" : rideResult === "rejected" ? "Ride Rejected!" : listening ? "Listening…" : "Voice Active"}
+      </div>
+      <div className="vsub">
+        {heardText
+          ? `"${heardText}"`
+          : "हाँ / accept\nनहीं / reject"}
+      </div>
+      {listening && <WaveAnimation />}
+      {/* NO buttons — that's the whole point */}
+      <div className="vno-buttons">
+        🔒 Screen locked while driving
+      </div>
     </div>
   );
 }
@@ -142,7 +166,7 @@ export default function PhoneDemo({
       <div className={`phone ${isBefore ? "phone-bad" : "phone-good"}`}>
         <div className="notch" />
         <div className="pscreen">
-          <MapArea speed={speed} variant={variant} rideActive={rideActive} safeModeOn={safeModeOn} />
+          <MapArea speed={speed} variant={variant} safeModeOn={safeModeOn} />
 
           <div className="pbottom">
             <div className="ptrip">
@@ -156,16 +180,10 @@ export default function PhoneDemo({
 
           {rideActive && (
             <div className="pride-overlay show">
-              <RideCard
-                variant={variant}
-                timerSec={timerSec}
-                safeModeOn={safeModeOn}
-                onAccept={onAccept}
-                onReject={onReject}
-                heardText={heardText}
-                listening={listening}
-                rideResult={rideResult}
-              />
+              {isBefore
+                ? <BeforeRideCard timerSec={timerSec} onAccept={onAccept} onReject={onReject} />
+                : <AfterRideCard timerSec={timerSec} safeModeOn={safeModeOn} onAccept={onAccept} onReject={onReject} heardText={heardText} listening={listening} rideResult={rideResult} />
+              }
             </div>
           )}
 
